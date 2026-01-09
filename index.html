@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2487.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 12.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
+    p.p2 {margin: 0.0px 0.0px 12.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000; min-height: 14.0px}
+    span.s1 {font-kerning: none}
+  </style>
+</head>
+<body>
+<p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
+<p class="p1"><span class="s1">&lt;html lang="th"&gt;</span></p>
+<p class="p1"><span class="s1">&lt;head&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;title&gt;ทำ Squat ได้กี่ครั้ง&lt;/title&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- Tailwind CSS สำหรับจัดหน้า --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- MediaPipe Pose Libraries --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"&gt;&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;style&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>body {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-family: 'Prompt', sans-serif;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background-color: #1a1a1a;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>color: white;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>overflow-x: hidden;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.canvas-container {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>position: relative;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>width: 100%;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>max-width: 800px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>margin: 0 auto;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border-radius: 1rem;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>overflow: hidden;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 30px rgba(0,0,0,0.5);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>canvas {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>width: 100%;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>height: auto;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>display: block;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transform: scaleX(-1); /* กลับด้านภาพให้เหมือนกระจก */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>/* ซ่อน video element ต้นฉบับ */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.input_video {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>display: none;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.loading-overlay {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>position: absolute;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>top: 0; left: 0; right: 0; bottom: 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: rgba(0,0,0,0.85);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>display: flex;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>justify-content: center;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>align-items: center;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>z-index: 10;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>flex-direction: column;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>text-align: center;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 20px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.spinner {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border: 4px solid #f3f3f3;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border-top: 4px solid #3498db;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border-radius: 50%;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>width: 40px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>height: 40px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>animation: spin 2s linear infinite;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>margin-bottom: 1rem;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>@keyframes spin {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>0% { transform: rotate(0deg); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>100% { transform: rotate(360deg); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>/* ปุ่ม Start */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.start-btn {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background-color: #3b82f6;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>color: white;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 12px 24px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border-radius: 8px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-weight: bold;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-size: 1.2rem;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>cursor: pointer;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border: none;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transition: background 0.3s;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>margin-top: 15px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.start-btn:hover {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background-color: #2563eb;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
+<p class="p1"><span class="s1">&lt;body class="min-h-screen flex flex-col items-center justify-center p-4"&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- ส่วนหัว --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;header class="text-center mb-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;h1 class="text-3xl font-bold text-blue-400 mb-2"&gt;AI Motion Analysis&lt;/h1&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="text-gray-400 text-sm"&gt;ระบบนับจำนวน Squat ด้วยการวิเคราะห์มุมของข้อต่อ&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/header&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- พื้นที่แสดงผลหลัก --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;!-- ส่วนแสดงผลวิดีโอ (กินพื้นที่ 2 ส่วน) --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="col-span-1 md:col-span-2"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="canvas-container bg-black aspect-video"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;!-- Overlay สำหรับ Loading และปุ่ม Start --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="loading" class="loading-overlay"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="start-screen"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;h3 class="text-xl font-bold mb-2"&gt;พร้อมใช้งาน&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;p class="text-gray-300 mb-4 text-sm"&gt;กดปุ่มด้านล่างเพื่ออนุญาตให้ใช้กล้อง&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button id="start-btn" class="start-btn"&gt;เริ่มใช้งานกล้อง&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="loading-spinner" style="display: none;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div class="spinner"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;p&gt;กำลังโหลดโมเดล AI...&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;p class="text-xs text-gray-400 mt-2"&gt;กรุณารอสักครู่...&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="error-message" class="hidden text-red-400 mt-4"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;video class="input_video"&gt;&lt;/video&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;canvas class="output_canvas"&gt;&lt;/canvas&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;!-- แผงควบคุมและข้อมูล (กินพื้นที่ 1 ส่วน) --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="col-span-1 bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col justify-between h-full"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2"&gt;ข้อมูลเรียลไทม์&lt;/h2&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="mb-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;p class="text-gray-400 text-sm"&gt;สถานะท่าทาง (State)&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="state-indicator" class="text-2xl font-bold text-yellow-400 transition-all duration-300"&gt;รอตรวจจับ...&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="mb-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;p class="text-gray-400 text-sm"&gt;มุมเข่าซ้าย (Knee Angle)&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div class="flex items-end"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;span id="angle-display" class="text-4xl font-mono font-bold text-white"&gt;0&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;span class="text-xl ml-1"&gt;°&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;!-- Progress bar แสดงความลึกของการนั่ง --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div class="w-full bg-gray-700 rounded-full h-2.5 mt-2"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div id="depth-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-100" style="width: 0%"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="bg-gray-900 rounded-lg p-4 text-center border border-gray-600"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;p class="text-gray-400 text-xs uppercase tracking-widest mb-1"&gt;จำนวนครั้ง (Count)&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;span id="counter" class="text-6xl font-bold text-green-400"&gt;0&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="mt-4 text-xs text-gray-500 text-center"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>* ยืนห่างจากกล้องให้เห็นทั้งตัว &lt;br&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>* หันข้างเล็กน้อยเพื่อให้เห็นมุมเข่าชัดเจน</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/main&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const videoElement = document.getElementsByClassName('input_video')[0];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const canvasElement = document.getElementsByClassName('output_canvas')[0];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const canvasCtx = canvasElement.getContext('2d');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const loadingElement = document.getElementById('loading');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const startScreen = document.getElementById('start-screen');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const loadingSpinner = document.getElementById('loading-spinner');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const startBtn = document.getElementById('start-btn');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const errorMsg = document.getElementById('error-message');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>// UI Elements</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const counterElement = document.getElementById('counter');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const angleElement = document.getElementById('angle-display');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const stateElement = document.getElementById('state-indicator');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const depthBar = document.getElementById('depth-bar');</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let count = 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let dir = 0; // 0 = ยืน, 1 = นั่ง (Squat ลงไปแล้ว)</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let isCameraRunning = false;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let camera = null;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>// ฟังก์ชันคำนวณองศาระหว่าง 3 จุด (A, B, C) โดยหาค่าที่มุม B</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>function calculateAngle(a, b, c) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// คำนวณหา angle ในหน่วย Radians แล้วแปลงเป็น Degrees</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>let radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>let angle = Math.abs(radians * 180.0 / Math.PI);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (angle &gt; 180.0) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>angle = 360 - angle;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>return Math.round(angle);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>function onResults(results) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// ซ่อน Loading เมื่อโมเดลทำงานครั้งแรกสำเร็จ</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (loadingElement.style.display !== 'none') {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>loadingElement.style.display = 'none';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// ตั้งค่า Canvas ให้ตรงกับขนาดวิดีโอ</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>canvasElement.width = videoElement.videoWidth;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>canvasElement.height = videoElement.videoHeight;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>canvasCtx.save();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// วาดภาพจากวิดีโอลง Canvas</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// หากตรวจพบ Pose Landmarks</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (results.poseLandmarks) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>// วาดเส้นโครงร่าง (Landscape)</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{color: '#00FF00', lineWidth: 4});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>drawLandmarks(canvasCtx, results.poseLandmarks,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{color: '#FF0000', lineWidth: 2, radius: 4});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>// --- ส่วนการพยากรณ์/วิเคราะห์ (Motion Prediction Logic) ---</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>// ดึงจุดพิกัดที่สำคัญ: สะโพกซ้าย(23), เข่าซ้าย(25), ข้อเท้าซ้าย(27)</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>// หมายเหตุ: MediaPipe ให้ค่า x, y เป็น 0.0 ถึง 1.0 (normalize)</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const landmarks = results.poseLandmarks;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>// ตรวจสอบความถูกต้องของข้อมูล (visibility)</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if(landmarks[23].visibility &gt; 0.5 &amp;&amp; landmarks[25].visibility &gt; 0.5 &amp;&amp; landmarks[27].visibility &gt; 0.5) {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const hip = landmarks[23];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const knee = landmarks[25];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const ankle = landmarks[27];</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>// คำนวณองศา</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const angle = calculateAngle(hip, knee, ankle);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>// อัปเดต UI องศา</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>angleElement.innerText = angle;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>// Visual Feedback: แถบความลึก (180 คือยืนตรง, 70 คือนั่งลึก)</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>// แมพค่า 180 -&gt; 0% และ 70 -&gt; 100%</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>let progress = Math.max(0, Math.min(100, ((180 - angle) / (180 - 70)) * 100));</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>depthBar.style.width = `${progress}%`;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>// --- Logic การนับ (Finite State Machine อย่างง่าย) ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>// ยืนปกติ: มุม &gt; 160</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>// Squat (นั่ง): มุม &lt; 90</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>if (angle &gt; 160) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>stateElement.innerText = "ยืน (Up)";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>stateElement.className = "text-2xl font-bold text-green-400 transition-all duration-300";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>if (dir === 1) { // ถ้าสถานะก่อนหน้าคือนั่ง แล้วกลับมายืน = นับ 1</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>count++;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>counterElement.innerText = count;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>dir = 0; // รีเซ็ตสถานะ</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>if (angle &lt; 90) { // ถ้าย่อลงจนมุมน้อยกว่า 90</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>stateElement.innerText = "ย่อ (Down)";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>stateElement.className = "text-2xl font-bold text-red-400 transition-all duration-300";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>if (dir === 0) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>dir = 1; // เปลี่ยนสถานะเป็น 'นั่งแล้ว'</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>// แสดงตัวเลขมุมที่หัวเข่าบนวิดีโอ</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>canvasCtx.fillStyle = "white";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>canvasCtx.font = "bold 24px Arial";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>canvasCtx.fillText(angle + "°", knee.x * canvasElement.width + 10, knee.y * canvasElement.height);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>canvasCtx.restore();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>// ตั้งค่า MediaPipe Pose</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const pose = new Pose({locateFile: (file) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>pose.setOptions({</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>modelComplexity: 1, // 0=เร็ว, 1=กลาง, 2=แม่นยำ</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>smoothLandmarks: true,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>enableSegmentation: false,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>minDetectionConfidence: 0.5,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>minTrackingConfidence: 0.5</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>pose.onResults(onResults);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>// ฟังก์ชันเริ่มต้นกล้องเมื่อกดปุ่ม</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>startBtn.addEventListener('click', () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>startScreen.style.display = 'none';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>loadingSpinner.style.display = 'block';</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// ตั้งค่ากล้อง</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>camera = new Camera(videoElement, {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>onFrame: async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>await pose.send({image: videoElement});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>},</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>width: 640,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>height: 480</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>camera.start()</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>.then(() =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>isCameraRunning = true;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>console.log("Camera started successfully");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>})</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>.catch(err =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>console.error("Error starting camera:", err);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>loadingSpinner.style.display = 'none';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>startScreen.style.display = 'block'; // Show start button again</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>errorMsg.style.display = 'block';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>errorMsg.innerHTML = `</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;strong&gt;ไม่สามารถเข้าถึงกล้องได้ (Camera Error)&lt;/strong&gt;&lt;br&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>${err.message}&lt;br&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;span class="text-xs text-gray-400"&gt;กรุณาตรวจสอบสิทธิ์ที่แถบ URL หรือการตั้งค่า Browser&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>`;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
+</body>
+</html>
