@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบวิเคราะห์ท่าทาง Squat (AI Pose Analysis)</title>
+    <title>ระบบวิเคราะห์ท่าทาง Squat </title>
     
-    <!-- Tailwind CSS สำหรับจัดหน้า -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- MediaPipe Pose Libraries -->
@@ -16,7 +16,7 @@
     <style>
         body {
             font-family: 'Prompt', sans-serif;
-            background-color: #1a1a1a;
+            background-color: #0f172a; /* Slate 900 */
             color: white;
             overflow-x: hidden;
         }
@@ -28,17 +28,16 @@
             border-radius: 1rem;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #000;
         }
         canvas {
             width: 100%;
             height: auto;
             display: block;
-            transform: scaleX(-1); /* กลับด้านภาพให้เหมือนกระจก */
+            transform: scaleX(-1); /* Mirror effect */
         }
-        /* ซ่อน video element ต้นฉบับ */
-        .input_video {
-            display: none;
-        }
+        .input_video { display: none; }
+        
         .loading-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -53,7 +52,7 @@
         }
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border-top: 4px solid #3b82f6;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -64,54 +63,66 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* ปุ่ม Start */
         .start-btn {
-            background-color: #3b82f6;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 14px 32px;
+            border-radius: 50px;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
             border: none;
-            transition: background 0.3s;
-            margin-top: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
         }
         .start-btn:hover {
-            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
         }
+        
+        /* Side label badges */
+        .side-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+        .badge-left { background-color: #ec4899; color: white; } /* Pink */
+        .badge-right { background-color: #06b6d4; color: white; } /* Cyan */
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- ส่วนหัว -->
+    <!-- Header -->
     <header class="text-center mb-6">
-        <h1 class="text-3xl font-bold text-blue-400 mb-2">AI Motion Analysis</h1>
-        <p class="text-gray-400 text-sm">ระบบนับจำนวน Squat ด้วยการวิเคราะห์มุมของข้อต่อ</p>
+        <h1 class="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 mb-2">
+            AI Squat Counter (Dual Side)
+        </h1>
+        <p class="text-gray-400 text-sm">ตรวจจับทั้งซ้ายและขวา (Left & Right Detection)</p>
     </header>
 
-    <!-- พื้นที่แสดงผลหลัก -->
-    <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4">
+    <main class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- ส่วนแสดงผลวิดีโอ (กินพื้นที่ 2 ส่วน) -->
-        <div class="col-span-1 md:col-span-2">
-            <div class="canvas-container bg-black aspect-video">
+        <!-- Video Section -->
+        <div class="col-span-1 lg:col-span-2">
+            <div class="canvas-container aspect-video border border-gray-800">
                 
-                <!-- Overlay สำหรับ Loading และปุ่ม Start -->
+                <!-- Overlay UI -->
                 <div id="loading" class="loading-overlay">
                     <div id="start-screen">
-                        <h3 class="text-xl font-bold mb-2">พร้อมใช้งาน</h3>
-                        <p class="text-gray-300 mb-4 text-sm">กดปุ่มด้านล่างเพื่ออนุญาตให้ใช้กล้อง</p>
+                        <div class="mb-6 text-6xl">🏋️‍♂️</div>
+                        <h3 class="text-xl font-bold mb-2">พร้อมเริ่มออกกำลังกาย?</h3>
+                        <p class="text-gray-400 mb-6 text-sm">ระบบจะใช้กล้องเพื่อวิเคราะห์ท่าทางของคุณ</p>
                         <button id="start-btn" class="start-btn">เริ่มใช้งานกล้อง</button>
                     </div>
                     
                     <div id="loading-spinner" style="display: none;">
                         <div class="spinner"></div>
-                        <p>กำลังโหลดโมเดล AI...</p>
-                        <p class="text-xs text-gray-400 mt-2">กรุณารอสักครู่...</p>
+                        <p class="font-medium">กำลังโหลดโมเดล AI...</p>
                     </div>
 
-                    <div id="error-message" class="hidden text-red-400 mt-4"></div>
+                    <div id="error-message" class="hidden text-red-400 mt-4 bg-red-900/20 p-4 rounded-lg border border-red-500/50"></div>
                 </div>
 
                 <video class="input_video"></video>
@@ -119,37 +130,52 @@
             </div>
         </div>
 
-        <!-- แผงควบคุมและข้อมูล (กินพื้นที่ 1 ส่วน) -->
-        <div class="col-span-1 bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col justify-between h-full">
-            <div>
-                <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2">ข้อมูลเรียลไทม์</h2>
+        <!-- Dashboard Section -->
+        <div class="col-span-1 flex flex-col gap-4">
+            
+            <!-- Main Counter Card -->
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-blue-500"></div>
+                <p class="text-gray-400 text-xs uppercase tracking-widest mb-2">Total Count</p>
+                <span id="counter" class="text-7xl font-bold text-white tracking-tighter">0</span>
+                <div id="state-indicator" class="mt-2 text-lg font-medium text-gray-500">Stand Up</div>
+            </div>
+
+            <!-- Detail Angles Card -->
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex-grow flex flex-col justify-center">
+                <h3 class="text-gray-300 font-semibold mb-4 border-b border-gray-700 pb-2">Real-time Angles</h3>
                 
-                <div class="mb-6">
-                    <p class="text-gray-400 text-sm">สถานะท่าทาง (State)</p>
-                    <div id="state-indicator" class="text-2xl font-bold text-yellow-400 transition-all duration-300">รอตรวจจับ...</div>
-                </div>
-
-                <div class="mb-6">
-                    <p class="text-gray-400 text-sm">มุมเข่าซ้าย (Knee Angle)</p>
-                    <div class="flex items-end">
-                        <span id="angle-display" class="text-4xl font-mono font-bold text-white">0</span>
-                        <span class="text-xl ml-1">°</span>
+                <!-- Left Leg -->
+                <div class="mb-5 opacity-50" id="container-left">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center">
+                            <span class="side-badge badge-left">LEFT</span>
+                            <span class="text-sm text-gray-300">เข่าซ้าย</span>
+                        </div>
+                        <span id="angle-left" class="text-2xl font-mono font-bold text-white">--</span>
                     </div>
-                    <!-- Progress bar แสดงความลึกของการนั่ง -->
-                    <div class="w-full bg-gray-700 rounded-full h-2.5 mt-2">
-                        <div id="depth-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-100" style="width: 0%"></div>
+                    <div class="w-full bg-slate-700 rounded-full h-2">
+                        <div id="bar-left" class="bg-pink-500 h-2 rounded-full transition-all duration-100" style="width: 0%"></div>
                     </div>
                 </div>
-            </div>
 
-            <div class="bg-gray-900 rounded-lg p-4 text-center border border-gray-600">
-                <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">จำนวนครั้ง (Count)</p>
-                <span id="counter" class="text-6xl font-bold text-green-400">0</span>
-            </div>
+                <!-- Right Leg -->
+                <div class="mb-2 opacity-50" id="container-right">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center">
+                            <span class="side-badge badge-right">RIGHT</span>
+                            <span class="text-sm text-gray-300">เข่าขวา</span>
+                        </div>
+                        <span id="angle-right" class="text-2xl font-mono font-bold text-white">--</span>
+                    </div>
+                    <div class="w-full bg-slate-700 rounded-full h-2">
+                        <div id="bar-right" class="bg-cyan-500 h-2 rounded-full transition-all duration-100" style="width: 0%"></div>
+                    </div>
+                </div>
 
-            <div class="mt-4 text-xs text-gray-500 text-center">
-                * ยืนห่างจากกล้องให้เห็นทั้งตัว <br>
-                * หันข้างเล็กน้อยเพื่อให้เห็นมุมเข่าชัดเจน
+                <div class="mt-6 p-3 bg-slate-900/50 rounded-lg text-xs text-gray-400 text-center">
+                    <p>💡 Tip: หากยืนหันข้าง ระบบจะเลือกด้านที่ชัดที่สุดโดยอัตโนมัติ</p>
+                </div>
             </div>
         </div>
     </main>
@@ -158,161 +184,190 @@
         const videoElement = document.getElementsByClassName('input_video')[0];
         const canvasElement = document.getElementsByClassName('output_canvas')[0];
         const canvasCtx = canvasElement.getContext('2d');
+        
+        // UI Screens
         const loadingElement = document.getElementById('loading');
         const startScreen = document.getElementById('start-screen');
         const loadingSpinner = document.getElementById('loading-spinner');
         const startBtn = document.getElementById('start-btn');
         const errorMsg = document.getElementById('error-message');
         
-        // UI Elements
+        // Data Displays
         const counterElement = document.getElementById('counter');
-        const angleElement = document.getElementById('angle-display');
         const stateElement = document.getElementById('state-indicator');
-        const depthBar = document.getElementById('depth-bar');
+        
+        const angleLeftDisplay = document.getElementById('angle-left');
+        const barLeft = document.getElementById('bar-left');
+        const containerLeft = document.getElementById('container-left');
+
+        const angleRightDisplay = document.getElementById('angle-right');
+        const barRight = document.getElementById('bar-right');
+        const containerRight = document.getElementById('container-right');
 
         let count = 0;
-        let dir = 0; // 0 = ยืน, 1 = นั่ง (Squat ลงไปแล้ว)
+        let dir = 0; // 0 = Up, 1 = Down
         let isCameraRunning = false;
         let camera = null;
 
-        // ฟังก์ชันคำนวณองศาระหว่าง 3 จุด (A, B, C) โดยหาค่าที่มุม B
+        // ฟังก์ชันคำนวณองศา
         function calculateAngle(a, b, c) {
-            // คำนวณหา angle ในหน่วย Radians แล้วแปลงเป็น Degrees
             let radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
             let angle = Math.abs(radians * 180.0 / Math.PI);
-
-            if (angle > 180.0) {
-                angle = 360 - angle;
-            }
+            if (angle > 180.0) angle = 360 - angle;
             return Math.round(angle);
         }
 
         function onResults(results) {
-            // ซ่อน Loading เมื่อโมเดลทำงานครั้งแรกสำเร็จ
+            // Hide loading on first frame
             if (loadingElement.style.display !== 'none') {
                 loadingElement.style.display = 'none';
             }
 
-            // ตั้งค่า Canvas ให้ตรงกับขนาดวิดีโอ
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
 
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            
-            // วาดภาพจากวิดีโอลง Canvas
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-            // หากตรวจพบ Pose Landmarks
             if (results.poseLandmarks) {
-                // วาดเส้นโครงร่าง (Landscape)
-                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
-                    {color: '#00FF00', lineWidth: 4});
-                drawLandmarks(canvasCtx, results.poseLandmarks,
-                    {color: '#FF0000', lineWidth: 2, radius: 4});
-
-                // --- ส่วนการพยากรณ์/วิเคราะห์ (Motion Prediction Logic) ---
-                
-                // ดึงจุดพิกัดที่สำคัญ: สะโพกซ้าย(23), เข่าซ้าย(25), ข้อเท้าซ้าย(27)
-                // หมายเหตุ: MediaPipe ให้ค่า x, y เป็น 0.0 ถึง 1.0 (normalize)
                 const landmarks = results.poseLandmarks;
+
+                // วาดเส้น Landmark ทั้งตัว
+                drawConnectors(canvasCtx, landmarks, POSE_CONNECTIONS, {color: '#94a3b8', lineWidth: 2}); // สีเทาจางๆ สำหรับเส้นรวม
                 
-                // ตรวจสอบความถูกต้องของข้อมูล (visibility)
-                if(landmarks[23].visibility > 0.5 && landmarks[25].visibility > 0.5 && landmarks[27].visibility > 0.5) {
-                    
-                    const hip = landmarks[23];
-                    const knee = landmarks[25];
-                    const ankle = landmarks[27];
+                // --- 1. วิเคราะห์ด้านซ้าย (Left) ---
+                // Hip(23), Knee(25), Ankle(27)
+                const leftHip = landmarks[23];
+                const leftKnee = landmarks[25];
+                const leftAnkle = landmarks[27];
+                let leftAngle = 0;
+                let leftVisible = false;
 
-                    // คำนวณองศา
-                    const angle = calculateAngle(hip, knee, ankle);
-
-                    // อัปเดต UI องศา
-                    angleElement.innerText = angle;
+                if (leftHip.visibility > 0.5 && leftKnee.visibility > 0.5 && leftAnkle.visibility > 0.5) {
+                    leftVisible = true;
+                    leftAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
                     
-                    // Visual Feedback: แถบความลึก (180 คือยืนตรง, 70 คือนั่งลึก)
-                    // แมพค่า 180 -> 0% และ 70 -> 100%
-                    let progress = Math.max(0, Math.min(100, ((180 - angle) / (180 - 70)) * 100));
-                    depthBar.style.width = `${progress}%`;
-
-                    // --- Logic การนับ (Finite State Machine อย่างง่าย) ---
-                    // ยืนปกติ: มุม > 160
-                    // Squat (นั่ง): มุม < 90
+                    // UI Update
+                    angleLeftDisplay.innerText = leftAngle + "°";
+                    let progressL = Math.max(0, Math.min(100, ((180 - leftAngle) / (180 - 70)) * 100));
+                    barLeft.style.width = `${progressL}%`;
+                    containerLeft.classList.remove('opacity-50');
                     
-                    if (angle > 160) {
+                    // วาดเส้นทับเฉพาะขาซ้ายให้เด่น
+                    drawLandmarks(canvasCtx, [leftHip, leftKnee, leftAnkle], {color: '#ec4899', lineWidth: 2, radius: 4});
+                    
+                    // แสดงตัวเลขบนจอ
+                    canvasCtx.fillStyle = "#ec4899"; // Pink
+                    canvasCtx.font = "bold 24px Arial";
+                    canvasCtx.fillText(leftAngle + "°", leftKnee.x * canvasElement.width + 10, leftKnee.y * canvasElement.height);
+                } else {
+                    containerLeft.classList.add('opacity-50');
+                    angleLeftDisplay.innerText = "--";
+                }
+
+                // --- 2. วิเคราะห์ด้านขวา (Right) ---
+                // Hip(24), Knee(26), Ankle(28)
+                const rightHip = landmarks[24];
+                const rightKnee = landmarks[26];
+                const rightAnkle = landmarks[28];
+                let rightAngle = 0;
+                let rightVisible = false;
+
+                if (rightHip.visibility > 0.5 && rightKnee.visibility > 0.5 && rightAnkle.visibility > 0.5) {
+                    rightVisible = true;
+                    rightAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
+
+                    // UI Update
+                    angleRightDisplay.innerText = rightAngle + "°";
+                    let progressR = Math.max(0, Math.min(100, ((180 - rightAngle) / (180 - 70)) * 100));
+                    barRight.style.width = `${progressR}%`;
+                    containerRight.classList.remove('opacity-50');
+
+                    // วาดเส้นทับเฉพาะขาขวาให้เด่น
+                    drawLandmarks(canvasCtx, [rightHip, rightKnee, rightAnkle], {color: '#06b6d4', lineWidth: 2, radius: 4});
+
+                    // แสดงตัวเลขบนจอ
+                    canvasCtx.fillStyle = "#06b6d4"; // Cyan
+                    canvasCtx.font = "bold 24px Arial";
+                    canvasCtx.fillText(rightAngle + "°", rightKnee.x * canvasElement.width - 60, rightKnee.y * canvasElement.height);
+                } else {
+                    containerRight.classList.add('opacity-50');
+                    angleRightDisplay.innerText = "--";
+                }
+
+                // --- 3. Logic การนับ (Smart Selection) ---
+                let mainAngle = 0;
+
+                if (leftVisible && rightVisible) {
+                    // ถ้าเห็นทั้งคู่ ให้ใช้ค่าเฉลี่ย
+                    mainAngle = (leftAngle + rightAngle) / 2;
+                } else if (leftVisible) {
+                    mainAngle = leftAngle;
+                } else if (rightVisible) {
+                    mainAngle = rightAngle;
+                }
+
+                // ตรวจจับเฉพาะเมื่อเห็นขาอย่างน้อย 1 ข้าง
+                if (leftVisible || rightVisible) {
+                    // Logic: ยืน > 160, นั่ง < 90
+                    if (mainAngle > 160) {
                         stateElement.innerText = "ยืน (Up)";
-                        stateElement.className = "text-2xl font-bold text-green-400 transition-all duration-300";
-                        if (dir === 1) { // ถ้าสถานะก่อนหน้าคือนั่ง แล้วกลับมายืน = นับ 1
+                        stateElement.className = "mt-2 text-lg font-bold text-green-400";
+                        if (dir === 1) {
                             count++;
                             counterElement.innerText = count;
-                            dir = 0; // รีเซ็ตสถานะ
+                            counterElement.classList.add("text-green-400");
+                            setTimeout(() => counterElement.classList.remove("text-green-400"), 500); // Animation Effect
+                            dir = 0;
                         }
                     }
-                    
-                    if (angle < 90) { // ถ้าย่อลงจนมุมน้อยกว่า 90
+                    if (mainAngle < 90) {
                         stateElement.innerText = "ย่อ (Down)";
-                        stateElement.className = "text-2xl font-bold text-red-400 transition-all duration-300";
+                        stateElement.className = "mt-2 text-lg font-bold text-yellow-400";
                         if (dir === 0) {
-                            dir = 1; // เปลี่ยนสถานะเป็น 'นั่งแล้ว'
+                            dir = 1;
                         }
                     }
-
-                    // แสดงตัวเลขมุมที่หัวเข่าบนวิดีโอ
-                    canvasCtx.fillStyle = "white";
-                    canvasCtx.font = "bold 24px Arial";
-                    canvasCtx.fillText(angle + "°", knee.x * canvasElement.width + 10, knee.y * canvasElement.height);
+                } else {
+                    stateElement.innerText = "ไม่พบขา (Not Visible)";
+                    stateElement.className = "mt-2 text-lg text-gray-500";
                 }
             }
             canvasCtx.restore();
         }
 
-        // ตั้งค่า MediaPipe Pose
-        const pose = new Pose({locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-        }});
-
+        // Setup MediaPipe
+        const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
         pose.setOptions({
-            modelComplexity: 1, // 0=เร็ว, 1=กลาง, 2=แม่นยำ
+            modelComplexity: 1,
             smoothLandmarks: true,
-            enableSegmentation: false,
             minDetectionConfidence: 0.5,
             minTrackingConfidence: 0.5
         });
-
         pose.onResults(onResults);
 
-        // ฟังก์ชันเริ่มต้นกล้องเมื่อกดปุ่ม
+        // Start Logic
         startBtn.addEventListener('click', () => {
             startScreen.style.display = 'none';
             loadingSpinner.style.display = 'block';
             
-            // ตั้งค่ากล้อง
             camera = new Camera(videoElement, {
-                onFrame: async () => {
-                    await pose.send({image: videoElement});
-                },
+                onFrame: async () => { await pose.send({image: videoElement}); },
                 width: 640,
                 height: 480
             });
 
-            camera.start()
-                .then(() => {
-                    isCameraRunning = true;
-                    console.log("Camera started successfully");
-                })
-                .catch(err => {
-                    console.error("Error starting camera:", err);
-                    loadingSpinner.style.display = 'none';
-                    startScreen.style.display = 'block'; // Show start button again
-                    errorMsg.style.display = 'block';
-                    errorMsg.innerHTML = `
-                        <strong>ไม่สามารถเข้าถึงกล้องได้ (Camera Error)</strong><br>
-                        ${err.message}<br>
-                        <span class="text-xs text-gray-400">กรุณาตรวจสอบสิทธิ์ที่แถบ URL หรือการตั้งค่า Browser</span>
-                    `;
-                });
+            camera.start().then(() => {
+                isCameraRunning = true;
+                console.log("Camera started");
+            }).catch(err => {
+                loadingSpinner.style.display = 'none';
+                startScreen.style.display = 'block';
+                errorMsg.style.display = 'block';
+                errorMsg.innerHTML = `Error: ${err.message}<br>กรุณาอนุญาตกล้อง (Allow Camera)`;
+            });
         });
-
     </script>
 </body>
 </html>
