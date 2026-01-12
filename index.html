@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบวิเคราะห์ท่าทาง Squat </title>
-    
+    <title>ออกกำลังกายไหม ภาพมันฟ้อง</title>
+     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- MediaPipe Pose Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <!-- เพิ่ม Library สำหรับวาดเส้นที่ขาดหายไป -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
     <style>
         body {
             font-family: 'Prompt', sans-serif;
-            background-color: #0f172a; /* Slate 900 */
+            background-color: #111827;
             color: white;
             overflow-x: hidden;
         }
@@ -25,159 +26,189 @@
             width: 100%;
             max-width: 800px;
             margin: 0 auto;
-            border-radius: 1rem;
+            border-radius: 1.5rem;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
             background: #000;
+            border: 2px solid #374151;
         }
         canvas {
             width: 100%;
             height: auto;
             display: block;
-            transform: scaleX(-1); /* Mirror effect */
+            transform: scaleX(-1); /* กลับด้านกระจก */
         }
         .input_video { display: none; }
         
         .loading-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(17, 24, 39, 0.95);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 20;
             flex-direction: column;
             text-align: center;
-            padding: 20px;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-            margin-bottom: 1rem;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .start-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            padding: 14px 32px;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border: none;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-        }
-        .start-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
         }
         
-        /* Side label badges */
-        .side-badge {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-right: 8px;
-            font-weight: bold;
+        /* ปุ่ม Start สไตล์เกม */
+        .start-btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+            color: white;
+            padding: 16px 40px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border: 4px solid rgba(255,255,255,0.1);
+            transition: all 0.2s;
+            box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .badge-left { background-color: #ec4899; color: white; } /* Pink */
-        .badge-right { background-color: #06b6d4; color: white; } /* Cyan */
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 30px -5px rgba(139, 92, 246, 0.6);
+        }
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
+        
+        .mode-btn {
+            @apply px-4 py-2 rounded-lg font-bold text-sm transition-all;
+        }
+        .mode-btn.active {
+            @apply bg-blue-500 text-white shadow-lg shadow-blue-500/50;
+        }
+        .mode-btn.inactive {
+            @apply bg-gray-700 text-gray-400 hover:bg-gray-600;
+        }
+
+        /* Animation Pulse for recording */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .live-indicator {
+            width: 12px; height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse-ring 2s infinite;
+        }
+
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid #374151;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
     <!-- Header -->
-    <header class="text-center mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 mb-2">
-            AI Squat Counter (Dual Side)
+    <header class="text-center mb-6 z-10">
+        <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 mb-2 drop-shadow-sm">
+            FITNESS AVATAR
         </h1>
-        <p class="text-gray-400 text-sm">ตรวจจับทั้งซ้ายและขวา (Left & Right Detection)</p>
+        <p class="text-gray-400">ขยับร่างกายเพื่อควบคุมตัวการ์ตูน</p>
     </header>
 
-    <main class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Video Section -->
-        <div class="col-span-1 lg:col-span-2">
-            <div class="canvas-container aspect-video border border-gray-800">
+        <!-- Controls & Stats Left -->
+        <div class="lg:col-span-3 flex flex-col gap-4 order-2 lg:order-1">
+            <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700">
+                <h3 class="text-gray-400 text-xs font-bold uppercase mb-4 tracking-wider">Display Mode</h3>
+                <div class="flex flex-col gap-2">
+                    <button id="mode-avatar" class="mode-btn active flex items-center justify-between">
+                        <span>🤖 Cartoon Avatar</span>
+                        <span class="text-xs opacity-70">Virtual</span>
+                    </button>
+                    <button id="mode-ar" class="mode-btn inactive flex items-center justify-between">
+                        <span>📹 Camera Overlay</span>
+                        <span class="text-xs opacity-70">AR View</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex-grow">
+                <h3 class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Status</h3>
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="live-indicator"></div>
+                    <span class="text-sm font-mono text-green-400">AI TRACKING ACTIVE</span>
+                </div>
                 
-                <!-- Overlay UI -->
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-400">Left Knee</span>
+                            <span id="txt-angle-l" class="font-mono text-pink-400 font-bold">0°</span>
+                        </div>
+                        <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                            <div id="bar-l" class="h-full bg-pink-500 transition-all duration-75" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-400">Right Knee</span>
+                            <span id="txt-angle-r" class="font-mono text-cyan-400 font-bold">0°</span>
+                        </div>
+                        <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                            <div id="bar-r" class="h-full bg-cyan-500 transition-all duration-75" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Canvas -->
+        <div class="lg:col-span-9 order-1 lg:order-2">
+            <div class="canvas-container aspect-video">
+                
                 <div id="loading" class="loading-overlay">
-                    <div id="start-screen">
-                        <div class="mb-6 text-6xl">🏋️‍♂️</div>
-                        <h3 class="text-xl font-bold mb-2">พร้อมเริ่มออกกำลังกาย?</h3>
-                        <p class="text-gray-400 mb-6 text-sm">ระบบจะใช้กล้องเพื่อวิเคราะห์ท่าทางของคุณ</p>
-                        <button id="start-btn" class="start-btn">เริ่มใช้งานกล้อง</button>
+                    <div id="start-screen" class="flex flex-col items-center">
+                        <div class="text-6xl mb-4 animate-bounce">🤖</div>
+                        <h2 class="text-2xl font-bold mb-2">พร้อมแปลงร่างไหม?</h2>
+                        <p class="text-gray-400 mb-8 max-w-md">ระบบจะจับการเคลื่อนไหวของคุณและสร้างตัวการ์ตูนเลียนแบบท่าทางแบบ Real-time</p>
+                        <button id="start-btn" class="start-btn">START GAME</button>
                     </div>
                     
-                    <div id="loading-spinner" style="display: none;">
-                        <div class="spinner"></div>
-                        <p class="font-medium">กำลังโหลดโมเดล AI...</p>
+                    <div id="loading-spinner" class="hidden flex flex-col items-center">
+                        <div class="spinner mb-4"></div>
+                        <p class="font-bold text-lg animate-pulse">Summoning AI Model...</p>
                     </div>
-
-                    <div id="error-message" class="hidden text-red-400 mt-4 bg-red-900/20 p-4 rounded-lg border border-red-500/50"></div>
+                    
+                    <div id="error-message" class="hidden text-red-400 mt-4 bg-red-900/50 p-4 rounded-lg"></div>
                 </div>
 
                 <video class="input_video"></video>
                 <canvas class="output_canvas"></canvas>
-            </div>
-        </div>
-
-        <!-- Dashboard Section -->
-        <div class="col-span-1 flex flex-col gap-4">
-            
-            <!-- Main Counter Card -->
-            <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 text-center relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-blue-500"></div>
-                <p class="text-gray-400 text-xs uppercase tracking-widest mb-2">Total Count</p>
-                <span id="counter" class="text-7xl font-bold text-white tracking-tighter">0</span>
-                <div id="state-indicator" class="mt-2 text-lg font-medium text-gray-500">Stand Up</div>
-            </div>
-
-            <!-- Detail Angles Card -->
-            <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex-grow flex flex-col justify-center">
-                <h3 class="text-gray-300 font-semibold mb-4 border-b border-gray-700 pb-2">Real-time Angles</h3>
                 
-                <!-- Left Leg -->
-                <div class="mb-5 opacity-50" id="container-left">
-                    <div class="flex justify-between items-center mb-1">
-                        <div class="flex items-center">
-                            <span class="side-badge badge-left">LEFT</span>
-                            <span class="text-sm text-gray-300">เข่าซ้าย</span>
-                        </div>
-                        <span id="angle-left" class="text-2xl font-mono font-bold text-white">--</span>
+                <!-- HUD Overlay -->
+                <div class="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 flex items-center gap-3">
+                    <div class="text-right">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold">Total Squats</p>
+                        <p id="counter" class="text-4xl font-black text-white leading-none">0</p>
                     </div>
-                    <div class="w-full bg-slate-700 rounded-full h-2">
-                        <div id="bar-left" class="bg-pink-500 h-2 rounded-full transition-all duration-100" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <!-- Right Leg -->
-                <div class="mb-2 opacity-50" id="container-right">
-                    <div class="flex justify-between items-center mb-1">
-                        <div class="flex items-center">
-                            <span class="side-badge badge-right">RIGHT</span>
-                            <span class="text-sm text-gray-300">เข่าขวา</span>
-                        </div>
-                        <span id="angle-right" class="text-2xl font-mono font-bold text-white">--</span>
-                    </div>
-                    <div class="w-full bg-slate-700 rounded-full h-2">
-                        <div id="bar-right" class="bg-cyan-500 h-2 rounded-full transition-all duration-100" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="mt-6 p-3 bg-slate-900/50 rounded-lg text-xs text-gray-400 text-center">
-                    <p>💡 Tip: หากยืนหันข้าง ระบบจะเลือกด้านที่ชัดที่สุดโดยอัตโนมัติ</p>
                 </div>
             </div>
         </div>
+
     </main>
 
     <script>
@@ -185,31 +216,43 @@
         const canvasElement = document.getElementsByClassName('output_canvas')[0];
         const canvasCtx = canvasElement.getContext('2d');
         
-        // UI Screens
-        const loadingElement = document.getElementById('loading');
-        const startScreen = document.getElementById('start-screen');
-        const loadingSpinner = document.getElementById('loading-spinner');
+        // UI Control
         const startBtn = document.getElementById('start-btn');
+        const loadingScreen = document.getElementById('loading');
+        const startScreen = document.getElementById('start-screen');
+        const spinner = document.getElementById('loading-spinner');
         const errorMsg = document.getElementById('error-message');
         
-        // Data Displays
-        const counterElement = document.getElementById('counter');
-        const stateElement = document.getElementById('state-indicator');
+        const modeAvatarBtn = document.getElementById('mode-avatar');
+        const modeArBtn = document.getElementById('mode-ar');
         
-        const angleLeftDisplay = document.getElementById('angle-left');
-        const barLeft = document.getElementById('bar-left');
-        const containerLeft = document.getElementById('container-left');
+        const counterEl = document.getElementById('counter');
+        const txtAngleL = document.getElementById('txt-angle-l');
+        const txtAngleR = document.getElementById('txt-angle-r');
+        const barL = document.getElementById('bar-l');
+        const barR = document.getElementById('bar-r');
 
-        const angleRightDisplay = document.getElementById('angle-right');
-        const barRight = document.getElementById('bar-right');
-        const containerRight = document.getElementById('container-right');
-
+        let isAvatarMode = true; // Default to Cartoon Avatar
         let count = 0;
-        let dir = 0; // 0 = Up, 1 = Down
-        let isCameraRunning = false;
-        let camera = null;
+        let dir = 0;
 
-        // ฟังก์ชันคำนวณองศา
+        // Mode Switching
+        modeAvatarBtn.addEventListener('click', () => setMode(true));
+        modeArBtn.addEventListener('click', () => setMode(false));
+
+        function setMode(isAvatar) {
+            isAvatarMode = isAvatar;
+            if(isAvatar) {
+                modeAvatarBtn.classList.add('active'); modeAvatarBtn.classList.remove('inactive');
+                modeArBtn.classList.add('inactive'); modeArBtn.classList.remove('active');
+            } else {
+                modeAvatarBtn.classList.add('inactive'); modeAvatarBtn.classList.remove('active');
+                modeArBtn.classList.add('active'); modeArBtn.classList.remove('inactive');
+            }
+        }
+
+        // --- Drawing Helper Functions ---
+        
         function calculateAngle(a, b, c) {
             let radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
             let angle = Math.abs(radians * 180.0 / Math.PI);
@@ -217,127 +260,191 @@
             return Math.round(angle);
         }
 
+        // ฟังก์ชันวาดตัวการ์ตูน
+        function drawCartoonAvatar(ctx, landmarks, width, height) {
+            const get = (i) => ({x: landmarks[i].x * width, y: landmarks[i].y * height});
+            
+            // 1. คำนวณขนาดเส้นตามระยะห่างของไหล่ (เพื่อให้เส้นหนาขึ้นเมื่อเข้ามาใกล้)
+            const shoulderWidth = Math.hypot(landmarks[11].x - landmarks[12].x, landmarks[11].y - landmarks[12].y) * width;
+            const baseSize = Math.max(8, shoulderWidth * 0.15); // Dynamic stroke width
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // -- Colors --
+            const skinColor = '#FCD34D'; // Yellow Face
+            const bodyColor = '#4B5563'; // Grey Suit
+            const armColor = '#E5E7EB';  // Light Grey Arms
+            const legLeftColor = '#EC4899'; // Pink
+            const legRightColor = '#06B6D4'; // Cyan
+
+            // Helper: Draw Limb segment
+            const drawLimb = (idx1, idx2, color, thickness) => {
+                const p1 = get(idx1);
+                const p2 = get(idx2);
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = thickness;
+                ctx.stroke();
+                
+                // Draw Joint Circle
+                ctx.fillStyle = '#1F2937';
+                ctx.beginPath();
+                ctx.arc(p2.x, p2.y, thickness * 0.6, 0, 2 * Math.PI);
+                ctx.fill();
+            };
+
+            // 2. Draw Legs
+            // Right Leg (Hip -> Knee -> Ankle)
+            drawLimb(24, 26, legRightColor, baseSize);
+            drawLimb(26, 28, legRightColor, baseSize);
+            
+            // Left Leg
+            drawLimb(23, 25, legLeftColor, baseSize);
+            drawLimb(25, 27, legLeftColor, baseSize);
+
+            // 3. Draw Body (Torso Polygon)
+            const p11 = get(11), p12 = get(12), p24 = get(24), p23 = get(23);
+            ctx.fillStyle = bodyColor;
+            ctx.beginPath();
+            ctx.moveTo(p11.x, p11.y);
+            ctx.lineTo(p12.x, p12.y);
+            ctx.lineTo(p24.x, p24.y);
+            ctx.lineTo(p23.x, p23.y);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Body Outline
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Decorative: Chest Core (Iron Man style)
+            const midChestX = (p11.x + p12.x) / 2;
+            const midChestY = (p11.y + p12.y) / 2 + (baseSize * 1.5);
+            ctx.fillStyle = '#60A5FA';
+            ctx.beginPath();
+            ctx.arc(midChestX, midChestY, baseSize * 0.8, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#60A5FA';
+            ctx.stroke();
+            ctx.shadowBlur = 0; // Reset shadow
+
+            // 4. Draw Arms
+            // Right Arm (Shoulder -> Elbow -> Wrist)
+            drawLimb(12, 14, armColor, baseSize * 0.8);
+            drawLimb(14, 16, armColor, baseSize * 0.8);
+            
+            // Left Arm
+            drawLimb(11, 13, armColor, baseSize * 0.8);
+            drawLimb(13, 15, armColor, baseSize * 0.8);
+
+            // 5. Draw Head
+            // Use Nose(0) as center, estimate radius from shoulder width or ear distance
+            const headCenter = get(0);
+            const earDist = Math.hypot(landmarks[7].x - landmarks[8].x, landmarks[7].y - landmarks[8].y) * width;
+            const headRadius = Math.max(20, earDist * 1.5);
+            
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.arc(headCenter.x, headCenter.y, headRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Sunglasses / Eyes (Robot Style)
+            const eyeY = headCenter.y - headRadius * 0.1;
+            const eyeW = headRadius * 1.2;
+            const eyeH = headRadius * 0.4;
+            ctx.fillStyle = '#111827';
+            ctx.fillRect(headCenter.x - eyeW/2, eyeY - eyeH/2, eyeW, eyeH);
+        }
+
+
+        // --- Main Loop ---
         function onResults(results) {
-            // Hide loading on first frame
-            if (loadingElement.style.display !== 'none') {
-                loadingElement.style.display = 'none';
+            // Hide loading on first success
+            if (loadingScreen.style.display !== 'none') {
+                loadingScreen.style.display = 'none';
             }
 
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
+            const w = canvasElement.width;
+            const h = canvasElement.height;
 
+            // 1. Draw Background
             canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.clearRect(0, 0, w, h);
+
+            if (isAvatarMode) {
+                // Background for Avatar Mode (Cyber Grid)
+                canvasCtx.fillStyle = '#1F2937'; // Dark gray bg
+                canvasCtx.fillRect(0, 0, w, h);
+                
+                // Optional: Draw simple floor grid
+                canvasCtx.strokeStyle = '#374151';
+                canvasCtx.lineWidth = 1;
+                for(let i=0; i<h; i+=50) {
+                    canvasCtx.beginPath(); canvasCtx.moveTo(0, i); canvasCtx.lineTo(w, i); canvasCtx.stroke();
+                }
+            } else {
+                // AR Mode: Draw Video Feed
+                canvasCtx.drawImage(results.image, 0, 0, w, h);
+            }
 
             if (results.poseLandmarks) {
                 const landmarks = results.poseLandmarks;
-
-                // วาดเส้น Landmark ทั้งตัว
-                drawConnectors(canvasCtx, landmarks, POSE_CONNECTIONS, {color: '#94a3b8', lineWidth: 2}); // สีเทาจางๆ สำหรับเส้นรวม
                 
-                // --- 1. วิเคราะห์ด้านซ้าย (Left) ---
-                // Hip(23), Knee(25), Ankle(27)
-                const leftHip = landmarks[23];
-                const leftKnee = landmarks[25];
-                const leftAnkle = landmarks[27];
-                let leftAngle = 0;
-                let leftVisible = false;
-
-                if (leftHip.visibility > 0.5 && leftKnee.visibility > 0.5 && leftAnkle.visibility > 0.5) {
-                    leftVisible = true;
-                    leftAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-                    
-                    // UI Update
-                    angleLeftDisplay.innerText = leftAngle + "°";
-                    let progressL = Math.max(0, Math.min(100, ((180 - leftAngle) / (180 - 70)) * 100));
-                    barLeft.style.width = `${progressL}%`;
-                    containerLeft.classList.remove('opacity-50');
-                    
-                    // วาดเส้นทับเฉพาะขาซ้ายให้เด่น
-                    drawLandmarks(canvasCtx, [leftHip, leftKnee, leftAnkle], {color: '#ec4899', lineWidth: 2, radius: 4});
-                    
-                    // แสดงตัวเลขบนจอ
-                    canvasCtx.fillStyle = "#ec4899"; // Pink
-                    canvasCtx.font = "bold 24px Arial";
-                    canvasCtx.fillText(leftAngle + "°", leftKnee.x * canvasElement.width + 10, leftKnee.y * canvasElement.height);
-                } else {
-                    containerLeft.classList.add('opacity-50');
-                    angleLeftDisplay.innerText = "--";
+                // --- Logic: Motion Analysis ---
+                // Calculate Angles
+                let leftAngle = 0, rightAngle = 0;
+                let isSquat = false;
+                
+                if (landmarks[23].visibility > 0.5 && landmarks[25].visibility > 0.5 && landmarks[27].visibility > 0.5) {
+                    leftAngle = calculateAngle(landmarks[23], landmarks[25], landmarks[27]);
+                    txtAngleL.innerText = leftAngle + "°";
+                    barL.style.width = Math.max(0, Math.min(100, ((180 - leftAngle)/90)*100)) + "%";
+                }
+                if (landmarks[24].visibility > 0.5 && landmarks[26].visibility > 0.5 && landmarks[28].visibility > 0.5) {
+                    rightAngle = calculateAngle(landmarks[24], landmarks[26], landmarks[28]);
+                    txtAngleR.innerText = rightAngle + "°";
+                    barR.style.width = Math.max(0, Math.min(100, ((180 - rightAngle)/90)*100)) + "%";
                 }
 
-                // --- 2. วิเคราะห์ด้านขวา (Right) ---
-                // Hip(24), Knee(26), Ankle(28)
-                const rightHip = landmarks[24];
-                const rightKnee = landmarks[26];
-                const rightAnkle = landmarks[28];
-                let rightAngle = 0;
-                let rightVisible = false;
-
-                if (rightHip.visibility > 0.5 && rightKnee.visibility > 0.5 && rightAnkle.visibility > 0.5) {
-                    rightVisible = true;
-                    rightAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
-
-                    // UI Update
-                    angleRightDisplay.innerText = rightAngle + "°";
-                    let progressR = Math.max(0, Math.min(100, ((180 - rightAngle) / (180 - 70)) * 100));
-                    barRight.style.width = `${progressR}%`;
-                    containerRight.classList.remove('opacity-50');
-
-                    // วาดเส้นทับเฉพาะขาขวาให้เด่น
-                    drawLandmarks(canvasCtx, [rightHip, rightKnee, rightAnkle], {color: '#06b6d4', lineWidth: 2, radius: 4});
-
-                    // แสดงตัวเลขบนจอ
-                    canvasCtx.fillStyle = "#06b6d4"; // Cyan
-                    canvasCtx.font = "bold 24px Arial";
-                    canvasCtx.fillText(rightAngle + "°", rightKnee.x * canvasElement.width - 60, rightKnee.y * canvasElement.height);
-                } else {
-                    containerRight.classList.add('opacity-50');
-                    angleRightDisplay.innerText = "--";
-                }
-
-                // --- 3. Logic การนับ (Smart Selection) ---
-                let mainAngle = 0;
-
-                if (leftVisible && rightVisible) {
-                    // ถ้าเห็นทั้งคู่ ให้ใช้ค่าเฉลี่ย
-                    mainAngle = (leftAngle + rightAngle) / 2;
-                } else if (leftVisible) {
-                    mainAngle = leftAngle;
-                } else if (rightVisible) {
-                    mainAngle = rightAngle;
-                }
-
-                // ตรวจจับเฉพาะเมื่อเห็นขาอย่างน้อย 1 ข้าง
-                if (leftVisible || rightVisible) {
-                    // Logic: ยืน > 160, นั่ง < 90
-                    if (mainAngle > 160) {
-                        stateElement.innerText = "ยืน (Up)";
-                        stateElement.className = "mt-2 text-lg font-bold text-green-400";
-                        if (dir === 1) {
-                            count++;
-                            counterElement.innerText = count;
-                            counterElement.classList.add("text-green-400");
-                            setTimeout(() => counterElement.classList.remove("text-green-400"), 500); // Animation Effect
-                            dir = 0;
-                        }
+                // Squat Counter Logic (Simplified for robustness)
+                const avgAngle = (leftAngle + rightAngle) / ( (leftAngle>0 && rightAngle>0) ? 2 : 1 );
+                if (avgAngle > 0) {
+                    if (avgAngle > 160) {
+                        if (dir === 1) { count++; counterEl.innerText = count; dir = 0; }
                     }
-                    if (mainAngle < 90) {
-                        stateElement.innerText = "ย่อ (Down)";
-                        stateElement.className = "mt-2 text-lg font-bold text-yellow-400";
-                        if (dir === 0) {
-                            dir = 1;
-                        }
+                    if (avgAngle < 100) {
+                        if (dir === 0) { dir = 1; }
                     }
+                }
+
+                // --- Drawing ---
+                if (isAvatarMode) {
+                    // Draw Custom Cartoon Avatar
+                    drawCartoonAvatar(canvasCtx, landmarks, w, h);
                 } else {
-                    stateElement.innerText = "ไม่พบขา (Not Visible)";
-                    stateElement.className = "mt-2 text-lg text-gray-500";
+                    // AR Mode: Draw Skeleton Lines
+                    // ตรวจสอบก่อนว่ามีฟังก์ชัน drawConnectors หรือไม่
+                    if (typeof drawConnectors !== 'undefined') {
+                        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
+                        drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2});
+                    }
+                    
+                    // Show angle on screen in AR mode
+                    canvasCtx.fillStyle = "white";
+                    canvasCtx.font = "bold 30px Arial";
+                    if(leftAngle > 0) canvasCtx.fillText(leftAngle + "°", landmarks[25].x * w, landmarks[25].y * h);
                 }
             }
             canvasCtx.restore();
         }
 
-        // Setup MediaPipe
         const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
         pose.setOptions({
             modelComplexity: 1,
@@ -347,27 +454,23 @@
         });
         pose.onResults(onResults);
 
-        // Start Logic
         startBtn.addEventListener('click', () => {
-            startScreen.style.display = 'none';
-            loadingSpinner.style.display = 'block';
+            startScreen.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            spinner.classList.add('flex');
             
-            camera = new Camera(videoElement, {
+            const camera = new Camera(videoElement, {
                 onFrame: async () => { await pose.send({image: videoElement}); },
                 width: 640,
                 height: 480
             });
-
-            camera.start().then(() => {
-                isCameraRunning = true;
-                console.log("Camera started");
-            }).catch(err => {
-                loadingSpinner.style.display = 'none';
-                startScreen.style.display = 'block';
-                errorMsg.style.display = 'block';
-                errorMsg.innerHTML = `Error: ${err.message}<br>กรุณาอนุญาตกล้อง (Allow Camera)`;
+            camera.start().catch(err => {
+                spinner.classList.add('hidden');
+                errorMsg.classList.remove('hidden');
+                errorMsg.innerText = "Error: " + err.message;
             });
         });
+
     </script>
 </body>
 </html>
